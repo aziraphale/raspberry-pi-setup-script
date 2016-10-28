@@ -1,0 +1,24 @@
+{
+    "name": "aziraphale/raspberry-pi-setup",
+    "description": "Script to set up a freshly-installed Raspberry Pi with everything I like to have on all of them",
+    "type": "project",
+    "require": {
+        "symfony/console": "^3.1",
+        "symfony/filesystem": "^3.1",
+        "symfony/finder": "^3.1",
+        "symfony/process": "^3.1",
+        "aziraphale/symfony-single-command-application": "^1.0"
+    },
+    "license": "CC-BY",
+    "authors": [
+        {
+            "name": "Andrew Gillard",
+            "email": "andrew@lorddeath.net"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Aziraphale\\RaspberryPiSetup\\": "./"
+        }
+    }
+}
