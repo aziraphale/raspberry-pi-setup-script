@@ -14,9 +14,9 @@ class GitUser extends StageCore implements StageInterface
     private static $stageName        = "Git User Details";
     private static $stageDescription = "Configures the global git username and email address so that git doesn't annoyingly prompt for those in future.";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, $listOnly)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
     {
-        parent::__construct($input, $output, $bailout, $listOnly, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()

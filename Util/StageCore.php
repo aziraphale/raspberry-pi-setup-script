@@ -38,11 +38,6 @@ abstract class StageCore
     protected $_stageDesc;
 
     /**
-     * @var bool
-     */
-    protected $listOnly;
-
-    /**
      * StageCore constructor.
      *
      * @param InputInterface  $input
@@ -54,14 +49,13 @@ abstract class StageCore
      * @param string          $stageDescription
      */
     public function __construct(
-        InputInterface $input, OutputInterface $output, Bailout $bailout, $listOnly,
+        InputInterface $input, OutputInterface $output, Bailout $bailout,
         $stageNumber, $stageName, $stageDescription
     )
     {
         $this->input      = $input;
         $this->output     = $output;
         $this->bailout    = $bailout;
-        $this->listOnly   = $listOnly;
         $this->_stageNum  = $stageNumber;
         $this->_stageName = $stageName;
         $this->_stageDesc = $stageDescription;

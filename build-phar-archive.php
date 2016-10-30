@@ -1,9 +1,23 @@
 <?php
 
+use Symfony\Component\Finder\Finder;
+
+require __DIR__ . "/vendor/autoload.php";
+
 /**
  * @var string $pharFilename
  */
 $pharFilename = 'raspi-setup.phar';
+
+/**
+ * @var string $stagesDir
+ */
+$stagesDir = __DIR__ . '/Stage/';
+
+/**
+ * @var string $stageListFilename
+ */
+$stageListFilename = 'Stage/.stages.txt';
 
 /**
  * @param SplFileInfo $current
@@ -45,6 +59,23 @@ $pharAddFilterCallback = function ($current, $key, $iterator) {
 
     // If we've not excluded stuff above, it's probably okay to include!
     return true;
+};
+
+$getStageFiles = function() {
+    global $stagesDir;
+
+    $stageFiles = [];
+    $finder = new Finder();
+    $finder->files()->in($stagesDir)->ignoreDotFiles(true)->name('/^\d+-|\.php$/i');
+    foreach ($finder as $file) {
+        $stageFiles[] = $file->getFilename();
+    }
+
+    if (count($stageFiles) < 1) {
+        echo " ! Unable to find any stages!\r\n";
+    }
+
+    return $stageFiles;
 };
 
 /**
@@ -141,6 +172,10 @@ $phar->buildFromIterator(
     ),
     __DIR__
 );
+
+echo "- Generating list of Stage files and including that list in the PHAR as Stage/.stages.txt.\r\n";
+$stageFiles = $getStageFiles();
+$phar->addFromString($stageListFilename, implode("\n", $stageFiles));
 
 $fileCount = $phar->count();
 if (!$fileCount) {

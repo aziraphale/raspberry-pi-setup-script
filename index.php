@@ -75,7 +75,7 @@ class RaspberryPiSetupCommand extends Command
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->bailout = new Bailout($input, $output);
-        $this->stageManager = new StageManager("./.pi-setup-state", "./Stage/", $input, $output, $this->bailout);
+        $this->stageManager = new StageManager(getcwd()."/.pi-setup-state", __DIR__."/Stage/", __DIR__."/Stage/.stages.txt", $input, $output, $this->bailout);
 
         $output->getFormatter()->setStyle('info', new OutputFormatterStyle('yellow', null, ['bold']));
         $output->getFormatter()->setStyle('hilight', new OutputFormatterStyle('white', null, ['bold']));

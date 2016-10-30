@@ -14,9 +14,9 @@ class AutoSshTunnel extends StageCore implements StageInterface
     private static $stageName        = "Auto-SSH Tunnel Setup";
     private static $stageDescription = "Sets up a reverse SSH tunnel (port 22000-ish on Hat forwarded to port 22 locally) managed by AutoSSH so that we can SSH into this Pi from our remote server, even if we don't know this Pi's IP address.";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, $listOnly)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
     {
-        parent::__construct($input, $output, $bailout, $listOnly, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()

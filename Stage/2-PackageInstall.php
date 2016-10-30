@@ -14,9 +14,9 @@ class PackageInstall extends StageCore implements StageInterface
     private static $stageName        = "Package Install";
     private static $stageDescription = "Installs all the packages needed both for the rest of this setup process and for general running of the Pi.";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, $listOnly)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
     {
-        parent::__construct($input, $output, $bailout, $listOnly, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()

@@ -40,6 +40,11 @@ class StageManager
     private $stagesDir;
 
     /**
+     * @var string
+     */
+    private $stagesListFile;
+
+    /**
      * @var InputInterface
      */
     private $input;
@@ -53,7 +58,6 @@ class StageManager
      * @var Bailout
      */
     private $bailout;
-
 
     /**
      * @var StageInterface[]
@@ -82,14 +86,16 @@ class StageManager
      *
      * @param string          $stageFile Pass FALSE if only wanting to LIST stages
      * @param string          $stagesDir
+     * @param string          $stagesListFile
      * @param InputInterface  $input
      * @param OutputInterface $output
      * @param Bailout         $bailout
      */
-    public function __construct($stageFile, $stagesDir, InputInterface $input, OutputInterface $output, Bailout $bailout)
+    public function __construct($stageFile, $stagesDir, $stagesListFile, InputInterface $input, OutputInterface $output, Bailout $bailout)
     {
         $this->stageFile = $stageFile;
         $this->stagesDir = $stagesDir;
+        $this->stagesListFile = $stagesListFile;
         $this->input = $input;
         $this->output = $output;
         $this->bailout = $bailout;
@@ -115,21 +121,33 @@ class StageManager
     private function itemiseStages()
     {
         $stages = [];
-        $finder = new Finder();
-        $finder->files()->in($this->stagesDir)->ignoreDotFiles(true)->name('/^\d+-|\.php$/i');
-        foreach ($finder as $file) {
-            $className = preg_replace('/^\d+-|\.php$/i', '', $file->getFilename());
-            $className = 'Aziraphale\\RaspberryPiSetup\\Stage\\' . $className;
+        $stageFiles = [];
 
-            require_once $file->getPathname();
-            /** @var StageInterface $stage */
-            $stage = new $className($this->input, $this->output, $this->bailout, $this->listOnly);
-            $stageNumber = (int) $stage->getNumber();
-            $stages[$stageNumber] = $stage;
+        if ($this->stagesListFile && file_exists($this->stagesListFile)) {
+            $stageFiles = explode("\n", file_get_contents($this->stagesListFile));
         }
 
-        if (count($stages) < 1) {
+        if (!$stageFiles) {
+            $finder = new Finder();
+            $finder->files()->in($this->stagesDir)->ignoreDotFiles(true)->name('/^\d+-|\.php$/i');
+            foreach ($finder as $file) {
+                $stageFiles[] = $file->getFilename();
+            }
+        }
+
+        if (count($stageFiles) < 1) {
             throw new StageManagerException("Unable to find any stages!");
+        }
+
+        foreach ($stageFiles as $stageFile) {
+            $className = preg_replace('/^\d+-|\.php$/i', '', $stageFile);
+            $className = 'Aziraphale\\RaspberryPiSetup\\Stage\\' . $className;
+
+            require_once $this->stagesDir . "/" . $stageFile;
+            /** @var StageInterface $stage */
+            $stage                = new $className($this->input, $this->output, $this->bailout);
+            $stageNumber          = (int) $stage->getNumber();
+            $stages[$stageNumber] = $stage;
         }
 
         ksort($stages);

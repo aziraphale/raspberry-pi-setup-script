@@ -14,9 +14,9 @@ class FishFunctions extends StageCore implements StageInterface
     private static $stageName        = "Fish Functions Installation";
     private static $stageDescription = "Installs a load of fish (shell) functions for use by the 'pi' user.";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, $listOnly)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
     {
-        parent::__construct($input, $output, $bailout, $listOnly, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()

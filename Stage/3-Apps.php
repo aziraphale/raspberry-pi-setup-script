@@ -14,9 +14,9 @@ class Apps extends StageCore implements StageInterface
     private static $stageName        = "Applications (Non-package Apps)";
     private static $stageDescription = "Downloads some required applications (which aren't available as Raspbian packages) into the ~/apps/ directory. Some may later require compilation.";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, $listOnly)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
     {
-        parent::__construct($input, $output, $bailout, $listOnly, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()

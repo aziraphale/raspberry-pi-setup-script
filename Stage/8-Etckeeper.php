@@ -14,9 +14,9 @@ class Etckeeper extends StageCore implements StageInterface
     private static $stageName        = "Etckeeper Configuration";
     private static $stageDescription = "Sets up & configures etckeeper to that this Pi's `/etc/` directory will be tracked in version control.";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, $listOnly)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
     {
-        parent::__construct($input, $output, $bailout, $listOnly, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()

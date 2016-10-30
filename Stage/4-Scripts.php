@@ -14,9 +14,9 @@ class Scripts extends StageCore implements StageInterface
     private static $stageName        = "Scripts Downloading";
     private static $stageDescription = "Clones our 'scripts' git repository into ~/scripts/ so that all of the scripts we need for general Pi operation are available.";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, $listOnly)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
     {
-        parent::__construct($input, $output, $bailout, $listOnly, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()

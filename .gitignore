@@ -2,3 +2,4 @@ vendor/
 *~
 
 raspi-setup.phar.gz
+.pi-setup-state

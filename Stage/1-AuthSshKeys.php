@@ -14,9 +14,9 @@ class AuthSshKeys extends StageCore implements StageInterface
     private static $stageName        = "Auth & SSH Keys";
     private static $stageDescription = "Sets the 'pi' user password & installs authorised SSH public keys for SSH keypair auth.";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, $listOnly)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
     {
-        parent::__construct($input, $output, $bailout, $listOnly, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()
