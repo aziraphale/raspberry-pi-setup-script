@@ -3,6 +3,7 @@
 namespace Aziraphale\RaspberryPiSetup\Util;
 
 use Aziraphale\RaspberryPiSetup\Exception\NoSuchStageException;
+use Aziraphale\RaspberryPiSetup\Exception\SkipThisStageException;
 use Aziraphale\RaspberryPiSetup\Exception\StageManagerException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -14,6 +15,24 @@ class StageManager
      * @var string
      */
     private $stageFile;
+
+    /**
+     * If true, we've requested to only LIST the stages that exist, not
+     *  actually run through any
+     *
+     * @var bool
+     */
+    private $listOnly = false;
+
+    /**
+     * @var int
+     */
+    private $startFrom;
+
+    /**
+     * @var int
+     */
+    private $onlyOneStage;
 
     /**
      * @var string
@@ -47,9 +66,21 @@ class StageManager
     private $currentStageNumber;
 
     /**
+     * Array of stage numbers which have thrown a SkipThisStageException
+     *
+     * @var int[]
+     */
+    private $stagesToSkip = [];
+
+    /**
+     * @var bool
+     */
+    private $optionsPassed = false;
+
+    /**
      * StageManager constructor.
      *
-     * @param string          $stageFile
+     * @param string          $stageFile Pass FALSE if only wanting to LIST stages
      * @param string          $stagesDir
      * @param InputInterface  $input
      * @param OutputInterface $output
@@ -64,7 +95,14 @@ class StageManager
         $this->bailout = $bailout;
 
         $this->itemiseStages();
-        $this->determineInitialStageNumber();
+    }
+
+    public function setOptions($listOnly, $startFrom, $onlyStage)
+    {
+        $this->listOnly = $listOnly;
+        $this->startFrom = $startFrom;
+        $this->onlyOneStage = $onlyStage;
+        $this->optionsPassed = true;
     }
 
     /**
@@ -78,16 +116,24 @@ class StageManager
     {
         $stages = [];
         $finder = new Finder();
-        $finder->in($this->stagesDir)->ignoreDotFiles(true)->contains('/.\php$/i');
-        foreach ($finder->files() as $file) {
-            $className = preg_replace('/\.php$/i', '', $file->getFilename());
+        $finder->files()->in($this->stagesDir)->ignoreDotFiles(true)->name('/^\d+-|\.php$/i');
+        foreach ($finder as $file) {
+            $className = preg_replace('/^\d+-|\.php$/i', '', $file->getFilename());
             $className = 'Aziraphale\\RaspberryPiSetup\\Stage\\' . $className;
 
+            require_once $file->getPathname();
             /** @var StageInterface $stage */
-            $stage = new $className($this->input, $this->output, $this->bailout);
-            $stageNumber = $stage->getNumber();
+            $stage = new $className($this->input, $this->output, $this->bailout, $this->listOnly);
+            $stageNumber = (int) $stage->getNumber();
             $stages[$stageNumber] = $stage;
         }
+
+        if (count($stages) < 1) {
+            throw new StageManagerException("Unable to find any stages!");
+        }
+
+        ksort($stages);
+
         $this->stages = $stages;
         return $this->stages;
     }
@@ -95,12 +141,38 @@ class StageManager
     private function determineInitialStageNumber()
     {
         try {
+            if (!$this->optionsPassed) {
+                throw new StageManagerException("Calling private method StageManager->determineInitialStageNumber() ".
+                                                "before the public StageManager->setOptions() method has been called ".
+                                                "will result in incorrect behaviour!");
+            }
+
+            if ($this->startFrom !== null) {
+                if (array_key_exists($this->startFrom, $this->stages)) {
+                    $this->currentStageNumber = (int) $this->startFrom;
+                    return $this->currentStageNumber;
+                } else {
+                    throw new StageManagerException("Requested to start from a stage number that doesn't exist!");
+                }
+            }
+            if ($this->onlyOneStage !== null) {
+                if (array_key_exists($this->onlyOneStage, $this->stages)) {
+                    $this->currentStageNumber = (int) $this->onlyOneStage;
+                    $this->stagesToSkip = array_diff(array_keys($this->stages), [$this->onlyOneStage]);
+                    return $this->currentStageNumber;
+                } else {
+                    throw new StageManagerException("Requested to only execute a stage number that doesn't exist!");
+                }
+            }
+
             if (!file_exists($this->stageFile)) {
-                if (!file_put_contents($this->stageFile, '0')) {
+                $this->currentStageNumber = 0;
+
+                if (!$this->storeCurrentStageNumber()) {
                     throw new StageManagerException("Unable to initialise new stage-tracking file!");
                 }
 
-                return 0;
+                return $this->currentStageNumber;
             } elseif (!is_readable($this->stageFile)) {
                 throw new StageManagerException("Unable to read existing stage-tracking file!");
             }
@@ -124,6 +196,21 @@ class StageManager
         }
     }
 
+    public function getAllStages()
+    {
+        return $this->stages;
+    }
+
+    public function storeCurrentStageNumber()
+    {
+        if (array_key_exists($this->currentStageNumber, $this->stages)) {
+            return file_put_contents($this->stageFile, $this->currentStageNumber);
+        } else {
+            $this->cleanUp();
+            return true;
+        }
+    }
+
     public function hasNextStage()
     {
         return array_key_exists($this->currentStageNumber, $this->stages);
@@ -131,6 +218,9 @@ class StageManager
 
     public function getNextStageNumber()
     {
+        if (!isset($this->currentStageNumber)) {
+            $this->determineInitialStageNumber();
+        }
         return $this->currentStageNumber;
     }
 
@@ -156,10 +246,41 @@ class StageManager
         return $this->getNextStage()->getDescription();
     }
 
+    public function letAllStagesAskPreRunQuestions()
+    {
+        foreach ($this->stages as $stageNum => $stage) {
+            if ($stageNum < $this->currentStageNumber) {
+                // Only ask for stages at and beyond our current stage number
+                continue;
+            }
+
+            try {
+                $stage->askPreRunQuestions();
+            } catch (SkipThisStageException $ex) {
+                // Stage has requested to be skipped, so we just move to the
+                //  next while making sure that the main body of the stage
+                //  isn't run either
+                $this->stagesToSkip[] = $stageNum;
+            }
+        }
+
+        // Just in case we've now been asked to skip the first stage or five
+        $this->progressPastSkippedStages();
+    }
+
+    private function progressPastSkippedStages()
+    {
+        while (in_array($this->currentStageNumber, $this->stagesToSkip, true)) {
+            $this->currentStageNumber++;
+        }
+    }
+
     public function executeNextStage()
     {
         $this->getNextStage()->run();
         $this->currentStageNumber++;
+
+        $this->progressPastSkippedStages();
     }
 
     public function cleanUp()
