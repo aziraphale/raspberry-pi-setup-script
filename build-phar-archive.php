@@ -33,6 +33,10 @@ $pharAddFilterCallback = function ($current, $key, $iterator) {
             // Skip this file...
             return false;
         }
+        if (preg_match('#^(LICEN[CS]E\b|README\b|composer\b)#i', $current->getFilename())) {
+            // Include licence files, readmes, etc., for the sake of legality & courtesy
+            return true;
+        }
         if (strcasecmp(substr($current->getFilename(), -4), '.php') !== 0) {
             // Only include *.php files
             return false;
