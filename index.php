@@ -115,7 +115,7 @@ class RaspberryPiSetupCommand extends Command
         $this->optStart = $input->getOption('start');
         $this->optOnly = $input->getOption('only');
 
-        var_dump(['list'=>$this->optList, 'start'=>$this->optStart, 'only'=>$this->optOnly]);
+        //var_dump(['list'=>$this->optList, 'start'=>$this->optStart, 'only'=>$this->optOnly]);
         $this->stageManager->setOptions($this->optList, $this->optStart, $this->optOnly);
     }
 

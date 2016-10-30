@@ -7,6 +7,7 @@ use Aziraphale\RaspberryPiSetup\Util\StageCore;
 use Aziraphale\RaspberryPiSetup\Util\StageInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class Scripts extends StageCore implements StageInterface
 {
@@ -22,11 +23,12 @@ class Scripts extends StageCore implements StageInterface
     public function run()
     {
         $this->output->writeln("This is run() of stage #{$this->getNumber()} “{$this->getName()}”!");
-        /*
-        cd ~pi || bailout "$LINENO: Failed to cd to ~pi?!"
 
-		echo "[$STAGE] Cloning our linux-scripts repo into ~pi/scripts..."
-		git clone git@bitbucket.org:lorddeath/linux-scripts.git scripts || bailout "$LINENO: Failed to clone linux-scripts..."
-         */
+        $this->output->writeln("Cloning our linux-scripts repo into ~pi/scripts...");
+        try {
+            $this->newProcessTty("git clone git@bitbucket.org:lorddeath/linux-scripts.git ~pi/scripts")->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this->bailout->writeln("Failed to clone linux-scripts...")->bail();
+        }
     }
 }

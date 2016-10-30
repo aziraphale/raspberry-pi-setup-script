@@ -7,6 +7,7 @@ use Aziraphale\RaspberryPiSetup\Util\StageCore;
 use Aziraphale\RaspberryPiSetup\Util\StageInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class FishFunctions extends StageCore implements StageInterface
 {
@@ -22,9 +23,18 @@ class FishFunctions extends StageCore implements StageInterface
     public function run()
     {
         $this->output->writeln("This is run() of stage #{$this->getNumber()} “{$this->getName()}”!");
-        /*
-        echo "[$STAGE] Symlinking fish function files into our fish config directory..."
-		mkdir -p ~pi/.config/fish/functions && pushd ~pi/.config/fish/functions && ln -s ~pi/scripts/fish/functions/* . && rm is.hat.fish && popd || bailout "$LINENO: Failed to symlink fish function files..."
-         */
+
+        $this->output->writeln("Symlinking fish function files into our fish config directory...");
+        try {
+            $this->newProcessTty(
+                "mkdir -p ~pi/.config/fish/functions && ".
+                "pushd ~pi/.config/fish/functions && ".
+                "ln -s ~pi/scripts/fish/functions/* . && ".
+                "rm is.hat.fish && ".
+                "popd"
+            )->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this->bailout->writeln("Failed to symlink fish function files...")->bail();
+        }
     }
 }

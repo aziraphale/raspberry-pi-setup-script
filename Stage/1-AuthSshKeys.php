@@ -7,6 +7,7 @@ use Aziraphale\RaspberryPiSetup\Util\StageCore;
 use Aziraphale\RaspberryPiSetup\Util\StageInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class AuthSshKeys extends StageCore implements StageInterface
 {
@@ -22,13 +23,21 @@ class AuthSshKeys extends StageCore implements StageInterface
     public function run()
     {
         $this->output->writeln("This is run() of stage #{$this->getNumber()} “{$this->getName()}”!");
-        /*
-        echo "[$STAGE] Pulling .ssh for Pi installs from Hex..."
-		scp -r andrew@hex.lorddeath.net:/mnt/backups/RPi/_setup/.ssh ~pi/ || bailout "$LINENO: Unable to fetch required .ssh dir from Hex!"
-		chmod 600 ~pi/.ssh/id_rsa
 
-		echo "[$STAGE] Creating symlinks of everything in ~pi/.ssh/ in ~root/.ssh/..."
-		sudo mkdir /root/.ssh && sudo ln ~pi/.ssh/* /root/.ssh/ || bailout "$LINENO: Failed to symlink ~pi/.ssh/ files into ~root/.ssh"
-         */
+        $this->output->writeln("Pulling .ssh for Pi installs from Hex...");
+        try {
+            $this->newProcessTty("scp -r andrew@hex.lorddeath.net:/mnt/backups/RPi/_setup/.ssh ~pi/")->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this->bailout->writeln("Unable to fetch required .ssh dir from Hex!")->bail();
+        }
+
+        $this->newProcessTty("chmod 600 ~pi/.ssh/id_rsa")->mustRun();
+
+        try {
+            $this->output->writeln("Creating symlinks of everything in ~pi/.ssh/ in ~root/.ssh/...");
+            $this->newProcessTty("sudo mkdir /root/.ssh && sudo ln ~pi/.ssh/* /root/.ssh/")->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this->bailout->writeln("Failed to symlink ~pi/.ssh/ files into ~root/.ssh")->bail();
+        }
     }
 }

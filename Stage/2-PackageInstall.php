@@ -7,6 +7,7 @@ use Aziraphale\RaspberryPiSetup\Util\StageCore;
 use Aziraphale\RaspberryPiSetup\Util\StageInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class PackageInstall extends StageCore implements StageInterface
 {
@@ -22,9 +23,18 @@ class PackageInstall extends StageCore implements StageInterface
     public function run()
     {
         $this->output->writeln("This is run() of stage #{$this->getNumber()} “{$this->getName()}”!");
-        /*
-        echo "[$STAGE] Installing loads of required packages..."
-		sudo apt-get update && sudo apt-get upgrade && sudo apt-get install fish vim autossh autoconf build-essential libncurses5-dev htop pv git php5 php5-cli php5-curl autotools-dev sensord python-smbus i2c-tools screen etckeeper etherwake wakeonlan nmap bluez python-bluez ssed || bailout "$LINENO: Failed to install required packages from apt... :("
-         */
+
+        try {
+            $this->output->writeln("Installing loads of required packages...");
+            $this->newProcessTty(
+                "sudo apt-get update && ".
+                "sudo apt-get -y upgrade && ".
+                "sudo apt-get -y install fish vim autossh autoconf build-essential libncurses5-dev htop pv ".
+                "git php5 php5-curl autotools-dev sensord python-smbus i2c-tools screen etckeeper etherwake ".
+                "wakeonlan nmap bluez python-bluez ssed"
+            )->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this->bailout->writeln("Failed to install required packages from apt... :(")->bail();
+        }
     }
 }
