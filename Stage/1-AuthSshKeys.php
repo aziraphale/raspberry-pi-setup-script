@@ -26,18 +26,30 @@ class AuthSshKeys extends StageCore implements StageInterface
 
         $this->output->writeln("Pulling .ssh for Pi installs from Hex...");
         try {
-            $this->newProcessTty("scp -r andrew@hex.lorddeath.net:/mnt/backups/RPi/_setup/.ssh ~pi/")->mustRun();
+            $this
+                ->newProcessTty("scp -r andrew@hex.lorddeath.net:/mnt/backups/RPi/_setup/.ssh ~pi/")
+                ->mustRun();
         } catch (ProcessFailedException $ex) {
-            $this->bailout->writeln("Unable to fetch required .ssh dir from Hex!")->bail();
+            $this
+                ->bailout
+                ->writeln("Unable to fetch required .ssh dir from Hex!")
+                ->bail();
         }
 
-        $this->newProcessTty("chmod 600 ~pi/.ssh/id_rsa")->mustRun();
+        $this
+            ->newProcessTty("chmod 600 ~pi/.ssh/id_rsa")
+            ->mustRun();
 
         try {
-            $this->output->writeln("Creating symlinks of everything in ~pi/.ssh/ in ~root/.ssh/...");
-            $this->newProcessTty("sudo mkdir /root/.ssh && sudo ln ~pi/.ssh/* /root/.ssh/")->mustRun();
+            $this->output->writeln("Creating hard links of everything in ~pi/.ssh/ in ~root/.ssh/...");
+            $this
+                ->newProcessTty("sudo mkdir /root/.ssh; sudo ln -f ~pi/.ssh/* /root/.ssh/")
+                ->mustRun();
         } catch (ProcessFailedException $ex) {
-            $this->bailout->writeln("Failed to symlink ~pi/.ssh/ files into ~root/.ssh")->bail();
+            $this
+                ->bailout
+                ->writeln("Failed to link ~pi/.ssh/ files into ~root/.ssh")
+                ->bail();
         }
     }
 }

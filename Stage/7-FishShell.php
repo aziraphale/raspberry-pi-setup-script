@@ -7,6 +7,7 @@ use Aziraphale\RaspberryPiSetup\Util\StageCore;
 use Aziraphale\RaspberryPiSetup\Util\StageInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class FishShell extends StageCore implements StageInterface
 {
@@ -22,17 +23,41 @@ class FishShell extends StageCore implements StageInterface
     public function run()
     {
         $this->output->writeln("This is run() of stage #{$this->getNumber()} “{$this->getName()}”!");
-        /*
-        echo "[$STAGE] Building Fish-shell..."
-		cd ~pi/apps/fish-shell/ && git tag -l || bailout "$LINENO: Failed to simply cd to the fish-shell WC and list tags?!"
 
-		echo "[$STAGE] A new shell will now be started so that you can \`git checkout\` the latest stable tag from the above tag list. Hit Ctrl-d when finished to return to this script and start the build process. Example command: \`git checkout 2.2.0\`"
-		bash || bailout "$LINENO: Invocation of bash subshell returned error exit status!"
+        $this->output->writeln("Preparing to build fish-shell...");
+        try {
+            $fishDir = "/home/pi/apps/fish-shell";
+            $this
+                ->newProcessTty("git pull", $fishDir)
+                ->mustRun();
 
-		autoconf && ./configure && make || bailout "$LINENO: Failed to build fish-shell :("
+            $this
+                ->newProcessTty('git checkout `git tag -l --sort=version:refname | ".
+                                "grep -P "^\d+\.\d+\.\d+" | tail -n1`', $fishDir)
+                ->mustRun();
 
-		echo "[$STAGE] Installing fish and setting it as the default shell for pi and root users..."
-		sudo make install && (echo /usr/local/bin/fish | sudo tee -a /etc/shells && sudo chsh -s /usr/local/bin/fish pi && sudo chsh -s /usr/local/bin/fish) || bailout "$LINENO: Failed to install fish and/or set it as the default shell..."
-         */
+            $this
+                ->newProcessTty("autoconf && ./configure && make && sudo make install", $fishDir)
+                ->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this
+                ->bailout
+                ->writeln("Failed to build/install fish!")
+                ->bail();
+        }
+
+        $this->output->writeln("Setting fish to be the default shell for both the 'pi' and 'root' users...");
+        try {
+            $this
+                ->newProcessTty("echo /usr/local/bin/fish | sudo tee -a /etc/shells && ".
+                                "sudo chsh -s /usr/local/bin/fish pi && ".
+                                "sudo chsh -s /usr/local/bin/fish")
+                ->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this
+                ->bailout
+                ->writeln("Failed to set fish as the default shell!")
+                ->bail();
+        }
     }
 }

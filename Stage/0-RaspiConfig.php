@@ -27,12 +27,14 @@ class RaspiConfig extends StageCore implements StageInterface
     public function run()
     {
         $this->output->writeln("First things first, we need to run the <hilight>raspi-config</hilight> program ".
-                               "and configure things within as apppropriate...");
+                               "and configure things within as appropriate...");
         $this->output->writeln("Please <hilight>DO NOT REBOOT</hilight> after configuring this Pi. If you do ".
                                "choose to reboot, please run this script again after the reboot to resume setup.");
 
         $this->pressEnterToContinue();
 
-        $this->newProcessTty('sudo raspi-config')->mustRun();
+        $this
+            ->newProcessTty('sudo raspi-config')
+            ->mustRun();
     }
 }

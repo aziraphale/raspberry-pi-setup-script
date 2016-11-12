@@ -7,6 +7,7 @@ use Aziraphale\RaspberryPiSetup\Util\StageCore;
 use Aziraphale\RaspberryPiSetup\Util\StageInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class GitUser extends StageCore implements StageInterface
 {
@@ -22,9 +23,18 @@ class GitUser extends StageCore implements StageInterface
     public function run()
     {
         $this->output->writeln("This is run() of stage #{$this->getNumber()} “{$this->getName()}”!");
-        /*
-        echo "[$STAGE] Setting git global configs..."
-		cd ~pi && git config --global user.email "andrew@lorddeath.net" && git config --global user.name "Andrew Gillard" && git config --global push.default simple || bailout "$LINENO: Failed to set git config values..."
-         */
+
+        $this->output->writeln("Configuring git user name & email address...");
+        try {
+            $this
+                ->newProcessTty('git config --global user.name "Andrew Gillard"')
+                ->mustRun();
+
+            $this
+                ->newProcessTty('git config --global user.email "andrew@lorddeath.net"')
+                ->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this->bailout->writeln("")->bail();
+        }
     }
 }

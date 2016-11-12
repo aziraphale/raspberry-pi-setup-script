@@ -160,6 +160,10 @@ class RaspberryPiSetupCommand extends Command
                 $this->bailout->writeln("There are no more setup stages left to be run!")->bail(0);
             }
 
+            if ($this->optOnly === null) {
+                $this->stageManager->letAllStagesAskPreRunQuestions();
+            }
+
             do {
                 $stageNo = $this->stageManager->getNextStageNumber();
                 $stageName = $this->stageManager->getNextStageName();
@@ -185,6 +189,7 @@ class RaspberryPiSetupCommand extends Command
             } while ($this->stageManager->hasNextStage());
 
             $output->writeln("<success>Setup process has completed successfully!</success>");
+            $output->writeln("<success>You should now reboot this Pi.</success>");
         } catch (\Exception $ex) {
             $this->bailout
                 ->writeln("Unexpected exception `".get_class($ex)."` thrown:")

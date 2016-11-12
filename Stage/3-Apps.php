@@ -25,21 +25,44 @@ class Apps extends StageCore implements StageInterface
         $this->output->writeln("This is run() of stage #{$this->getNumber()} “{$this->getName()}”!");
 
         $this->output->writeln("Downloading lots of stuff into ~pi/apps");
-        try {
-            $this->newProcessTty("mkdir ~pi/apps")->mustRun();
-        } catch (ProcessFailedException $ex) {
-            $this->bailout->writeln("Not even able to create ~pi/apps?!")->bail();
+        if (!@mkdir("/home/pi/apps") && !is_dir("/home/pi/apps")) {
+            $this
+                ->bailout
+                ->writeln("Not even able to create ~pi/apps?!")
+                ->bail();
         }
 
-        $this->output->writeln("Cloning fish-shell git repo...");
-        try {
-            $this->newProcessTty("git clone git@github.com:fish-shell/fish-shell.git ~pi/apps/fish-shell")->mustRun();
-        } catch (ProcessFailedException $ex) {
-            $this->bailout->writeln("Failed to git-clone fish-shell :(")->bail();
+        if (!is_dir("/home/pi/apps/fish-shell")) {
+            $this->output->writeln("Cloning fish-shell git repo...");
+            try {
+                $this
+                    ->newProcessTty("git clone git@github.com:fish-shell/fish-shell.git ~pi/apps/fish-shell")
+                    ->mustRun();
+            } catch (ProcessFailedException $ex) {
+                $this
+                    ->bailout
+                    ->writeln("Failed to git-clone fish-shell :(")
+                    ->bail();
+            }
+        }
+
+        if (!is_dir("/home/pi/apps/mjpg-streamer")) {
+            $this->output->writeln("Cloning mjpg-streamer git repo for Pi camera streaming...");
+            try {
+                $this
+                    ->newProcessTty("git clone https://github.com/jacksonliam/mjpg-streamer.git ~pi/apps/mjpg-streamer")
+                    ->mustRun();
+            } catch (ProcessFailedException $ex) {
+                $this
+                    ->bailout
+                    ->writeln("Failed to git-clone mjpg-streamer :(")
+                    ->bail();
+            }
         }
 
         //$this->output->writeln("Cloning quick2wire-gpio-admin...");
         //try {
+        //    // @todo If it doesn't exist
         //    $this->newProcessTty(
         //        "git clone git://github.com/quick2wire/quick2wire-gpio-admin.git ~pi/apps/quick2wire-gpio-admin"
         //    )->mustRun();
@@ -49,6 +72,7 @@ class Apps extends StageCore implements StageInterface
 
         //$this->output->writeln("Removing Raspbian's nodejs and installing newer node.js...");
         //try {
+        //    // @todo If it doesn't exist
         //    $this->newProcessTty("sudo apt-get remove nodejs")->run();
         //    $this->newProcessTty(
         //        "wget http://node-arm.herokuapp.com/node_latest_armhf.deb && ".
@@ -61,6 +85,7 @@ class Apps extends StageCore implements StageInterface
 
         //$this->output->writeln("Installing WebIOPi...");
         //try {
+        //    // @todo If it doesn't exist
         //    $this->newProcessTty(
         //        "wget http://netassist.dl.sourceforge.net/project/webiopi/WebIOPi-0.7.1.tar.gz && ".
         //        "tar xzf WebIOPi-0.7.1.tar.gz",

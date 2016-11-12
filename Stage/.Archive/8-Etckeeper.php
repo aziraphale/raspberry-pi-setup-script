@@ -7,6 +7,7 @@ use Aziraphale\RaspberryPiSetup\Util\StageCore;
 use Aziraphale\RaspberryPiSetup\Util\StageInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class Etckeeper extends StageCore implements StageInterface
 {
@@ -22,18 +23,52 @@ class Etckeeper extends StageCore implements StageInterface
     public function run()
     {
         $this->output->writeln("This is run() of stage #{$this->getNumber()} “{$this->getName()}”!");
+
         /*
-        echo "[$STAGE] Time to configure etckeeper!"
+        ## What name to use for etckeeper's git branch?
+        example="pi-mine"
+        [ "$(hostname)" =~ ^pi- ] && example="$(hostname)"
+        BRANCH_NAME=""
+        while [[ ! $BRANCH_NAME =~ ^pi-[A-Za-z0-9_\-]+$ ]]; do
+            echo "[$STAGE] Enter the name (starting with 'pi-') to use for this Pi's etckeeper branch, e.g. '$example'."
+            read -p "[$STAGE] etckeeper git branch name: " BRANCH_NAME
+        done
+         */
+        $this->output->writeln("Setting up etckeeper!");
+        try {
+            $this->newProcessTty("")->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this->bailout->writeln("")->bail();
+        }
+        try {
+            // @todo Need to find existing branches to ensure that new branch name is unique
+            $newBranchName = $this->askForString();
+            $this->newProcessTty("")->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this->bailout->writeln("")->bail();
+        }
 
-		## What name to use for etckeeper's git branch?
-		example="pi-mine"
-		[ "$(hostname)" =~ ^pi- ] && example="$(hostname)"
-		BRANCH_NAME=""
-		while [[ ! $BRANCH_NAME =~ ^pi-[A-Za-z0-9_\-]+$ ]]; do
-			echo "[$STAGE] Enter the name (starting with 'pi-') to use for this Pi's etckeeper branch, e.g. '$example'."
-			read -p "[$STAGE] etckeeper git branch name: " BRANCH_NAME
-		done
+        $this->output->writeln("");
+        try {
+            $this->newProcessTty("")->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this->bailout->writeln("")->bail();
+        }
 
+        $this->output->writeln("");
+        try {
+            $this->newProcessTty("")->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this->bailout->writeln("")->bail();
+        }
+
+        $this->output->writeln("Copying into place the etckeeper push hook...");
+        try {
+            $this->newProcessTty("cp ~pi/scripts/etckeeper-push/99push-pi-doorcam.sh /etc/etckeeper/commit.d/")->mustRun();
+        } catch (ProcessFailedException $ex) {
+            $this->bailout->writeln("")->bail();
+        }
+        /*
 		echo "[$STAGE] Renaming etckeeper git branch and adding github as our origin remote..."
 		pushd /etc && sudo git branch -m master "$BRANCH_NAME" || bailout "$LINENO: Failed to rename etckeeper git branch?!"
 		sudo git remote add origin git@github.com:aziraphale/etc.git || bailout "$LINENO: Failed to add github as origin remote..."
