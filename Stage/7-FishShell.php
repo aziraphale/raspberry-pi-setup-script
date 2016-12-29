@@ -15,9 +15,9 @@ class FishShell extends StageCore implements StageInterface
     private static $stageName        = "Acquiring Fish Shell";
     private static $stageDescription = "Downloads the latest version of the Fish Shell, as the version in the Raspbian package repository tends to be fairly out-of-date.";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, \stdClass $config)
     {
-        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, $config, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()

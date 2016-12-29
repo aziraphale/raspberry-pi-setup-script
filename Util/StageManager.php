@@ -60,6 +60,11 @@ class StageManager
     private $bailout;
 
     /**
+     * @var \stdClass
+     */
+    private $config;
+
+    /**
      * @var StageInterface[]
      */
     private $stages;
@@ -103,11 +108,12 @@ class StageManager
         $this->itemiseStages();
     }
 
-    public function setOptions($listOnly, $startFrom, $onlyStage)
+    public function setOptions($listOnly, $startFrom, $onlyStage, $config)
     {
         $this->listOnly = $listOnly;
         $this->startFrom = $startFrom;
         $this->onlyOneStage = $onlyStage;
+        $this->config = $config;
         $this->optionsPassed = true;
     }
 
@@ -145,7 +151,7 @@ class StageManager
 
             require_once $this->stagesDir . "/" . $stageFile;
             /** @var StageInterface $stage */
-            $stage                = new $className($this->input, $this->output, $this->bailout);
+            $stage                = new $className($this->input, $this->output, $this->bailout, $this->config);
             $stageNumber          = (int) $stage->getNumber();
             $stages[$stageNumber] = $stage;
         }

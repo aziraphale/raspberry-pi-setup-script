@@ -1,0 +1,9 @@
+{
+    "ScriptsDownloading": {
+        "InstallCameraService": false,
+        "CameraServiceHostname": "example"
+    },
+    "AutoSSHTunnelSetup": {
+        "SshTunnelServiceHostname": "pi0-example"
+    }
+}

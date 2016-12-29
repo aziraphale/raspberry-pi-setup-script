@@ -22,9 +22,9 @@ class Scripts extends StageCore implements StageInterface
     private $piCameraServiceFilePattern = "/home/pi/scripts/init-scripts/pi-camera/ag-pi-camera.%s.service";
     private $piCameraServiceSystemdMatchPattern = "ag-pi-camera*";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, \stdClass $config)
     {
-        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, $config, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()

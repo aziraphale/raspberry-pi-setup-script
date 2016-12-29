@@ -10,7 +10,6 @@ use Aziraphale\RaspberryPiSetup\Util\StageManager;
 use Aziraphale\Symfony\SingleCommandApplication;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\Output;
@@ -45,6 +44,16 @@ class RaspberryPiSetupCommand extends Command
      */
     private $optOnly = null;
 
+    /**
+     * @var string|null
+     */
+    private $optConfigFile = null;
+
+    /**
+     * @var \stdClass|null
+     */
+    private $config = null;
+
     protected function configure()
     {
         $this
@@ -60,8 +69,9 @@ class RaspberryPiSetupCommand extends Command
             ->addOption('list', 'l', InputOption::VALUE_NONE,
                         "If passed, all stages will be listed and none will be run. Overrides 'start' and 'only' ".
                         "options.")
-
-            //->addArgument('text', InputArgument::REQUIRED, "The text version of the email body. Can also be passed via STDIN by either leaving this argument empty or passing '-' (a single hyphen) as this argument.")
+            ->addOption('config', 'c', InputOption::VALUE_REQUIRED,
+                        "Specify a configuration .json file to supply answers to prompts so setup can potentially ".
+                        "run without interruptions (assuming everything goes to plan).")
         ;
     }
 
@@ -75,7 +85,14 @@ class RaspberryPiSetupCommand extends Command
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->bailout = new Bailout($input, $output);
-        $this->stageManager = new StageManager(getcwd()."/.pi-setup-state", __DIR__."/Stage/", __DIR__."/Stage/.stages.txt", $input, $output, $this->bailout);
+        $this->stageManager = new StageManager(
+            getcwd() . "/.pi-setup-state",
+            __DIR__ . "/Stage/",
+            __DIR__ . "/Stage/.stages.txt",
+            $input,
+            $output,
+            $this->bailout
+        );
 
         $output->getFormatter()->setStyle('info', new OutputFormatterStyle('yellow', null, ['bold']));
         $output->getFormatter()->setStyle('hilight', new OutputFormatterStyle('white', null, ['bold']));
@@ -96,27 +113,56 @@ class RaspberryPiSetupCommand extends Command
         $this->saveOptions($input, $output);
 
         if ($this->optStart !== null && $this->optOnly !== null) {
-            $this->bailout
+            $this
+                ->bailout
                 ->writeln("Passing both 'start' and 'only' options is illogical! We only support one at a time!")
                 ->bail(1);
         }
         if ($this->optList === true && ($this->optStart !== null || $this->optOnly !== null)) {
-            $this->bailout
+            $this
+                ->bailout
                 ->writeln("Passing the 'start' or 'only' options along with 'list' is illogical! ".
                           "If 'list' is passed, no stages at all will be run, making specifying which stages ".
                           "are going to run nonsensical!")
+                ->bail(1);
+        }
+
+        if ($this->optConfigFile !== null && (!is_file($this->optConfigFile) || !is_readable($this->optConfigFile))) {
+            $this
+                ->bailout
+                ->writeln("Specified config file '{$this->optConfigFile}' either doesn't exist or cannot be read!")
                 ->bail(1);
         }
     }
 
     protected function saveOptions(InputInterface $input, OutputInterface $output)
     {
-        $this->optList = $input->getOption('list');
-        $this->optStart = $input->getOption('start');
-        $this->optOnly = $input->getOption('only');
+        $this->optList       = $input->getOption('list');
+        $this->optStart      = $input->getOption('start');
+        $this->optOnly       = $input->getOption('only');
+        $this->optConfigFile = $input->getOption('config');
+
+        if ($this->optConfigFile) {
+            $configJsonStr = file_get_contents($this->optConfigFile);
+            if ($configJsonStr === false) {
+                $this
+                    ->bailout
+                    ->writeln("Unable to read the contents of the config file '{$this->optConfigFile}'!")
+                    ->bail(1);
+            }
+
+            $configJson = @json_decode($configJsonStr);
+            if ($configJson === null) {
+                $this
+                    ->bailout
+                    ->writeln("Error decoding JSON of config file: " . json_last_error_msg())
+                    ->bail(2);
+            }
+            $this->config = $configJson;
+        }
 
         //var_dump(['list'=>$this->optList, 'start'=>$this->optStart, 'only'=>$this->optOnly]);
-        $this->stageManager->setOptions($this->optList, $this->optStart, $this->optOnly);
+        $this->stageManager->setOptions($this->optList, $this->optStart, $this->optOnly, $this->config);
     }
 
     protected function listStages(InputInterface $input, OutputInterface $output)

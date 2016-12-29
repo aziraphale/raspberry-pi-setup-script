@@ -36,6 +36,11 @@ abstract class StageCore
     protected $bailout;
 
     /**
+     * @var \stdClass
+     */
+    protected $config;
+
+    /**
      * @var int
      */
     protected $_stageNum;
@@ -56,19 +61,21 @@ abstract class StageCore
      * @param InputInterface  $input
      * @param OutputInterface $output
      * @param Bailout         $bailout
-     * @param bool            $listOnly
+     * @param \stdClass       $config
      * @param int             $stageNumber
      * @param string          $stageName
      * @param string          $stageDescription
+     * @internal param bool $listOnly
      */
     public function __construct(
-        InputInterface $input, OutputInterface $output, Bailout $bailout,
+        InputInterface $input, OutputInterface $output, Bailout $bailout, \stdClass $config,
         $stageNumber, $stageName, $stageDescription
     )
     {
         $this->input      = $input;
         $this->output     = $output;
         $this->bailout    = $bailout;
+        $this->config     = $config;
         $this->_stageNum  = $stageNumber;
         $this->_stageName = $stageName;
         $this->_stageDesc = $stageDescription;
@@ -120,9 +127,10 @@ abstract class StageCore
     {
         $classId = $this->getClassNameForConfigId();
 
-        // @todo load the config file once (somewhere in index.php), but only if passed as an option. then make available to stages
-        // @todo return value from this method; have question methods call this method, then have each validate the answer depending on the type of question they ask
-        return '';
+        if (isset($this->config->{$classId}->{$questionId})) {
+            return $this->config->{$classId}->{$questionId};
+        }
+        return null;
     }
 
     protected function pressEnterToContinue($prompt = "Press ENTER to continue...")
@@ -140,9 +148,24 @@ abstract class StageCore
         if ($questionIdString !== null) {
             $configValue = $this->getConfigValueIfPresent($questionIdString);
             if ($configValue !== null) {
-                // @todo validate answer using $yesRegexp, and $validator if set
+                /** @noinspection NotOptimalRegularExpressionsInspection */
+                $valid = (bool) preg_match($yesRegexp, $configValue);
 
-                // @todo If valid config value, return $configValue;, else continue asking...
+                if ($valid && $validator !== null) {
+                    try {
+                        $configValue = $validator($configValue);
+                    } catch (\Exception $ex) {
+                        $this
+                            ->bailout
+                            ->writeln("Validation error with config value ".
+                                      $this->getClassNameForConfigId() . "/" . $questionIdString .
+                                      ": " . $ex->getMessage());
+                        $valid = false;
+                    }
+                }
+                if ($valid) {
+                    return $configValue;
+                }
             }
         }
 
@@ -158,9 +181,23 @@ abstract class StageCore
         if ($questionIdString !== null) {
             $configValue = $this->getConfigValueIfPresent($questionIdString);
             if ($configValue !== null) {
-                // @todo validate answer using $validator if set
+                $valid = true;
+                if ($validator !== null) {
+                    try {
+                        $configValue = $validator($configValue);
+                    } catch (\Exception $ex) {
+                        $this
+                            ->bailout
+                            ->writeln("Validation error with config value ".
+                                      $this->getClassNameForConfigId() . "/" . $questionIdString .
+                                      ": " . $ex->getMessage());
+                        $valid = false;
+                    }
+                }
 
-                // @todo If valid config value, return $configValue;, else continue asking...
+                if ($valid) {
+                    return $configValue;
+                }
             }
         }
 
@@ -176,9 +213,32 @@ abstract class StageCore
         if ($questionIdString !== null) {
             $configValue = $this->getConfigValueIfPresent($questionIdString);
             if ($configValue !== null) {
-                // @todo validate answer using $options, and $validator if set
+                $inOptions = false;
+                foreach ($options as $option) {
+                    if (strcasecmp($configValue, $option) === 0) {
+                        $configValue = $option;
+                        $inOptions = true;
+                        break;
+                    }
+                }
+                $valid = $inOptions;
 
-                // @todo If valid config value, return $configValue;, else continue asking...
+                if ($validator !== null) {
+                    try {
+                        $configValue = $validator($configValue);
+                    } catch (\Exception $ex) {
+                        $this
+                            ->bailout
+                            ->writeln("Validation error with config value ".
+                                      $this->getClassNameForConfigId() . "/" . $questionIdString .
+                                      ": " . $ex->getMessage());
+                        $valid = false;
+                    }
+                }
+
+                if ($valid) {
+                    return $configValue;
+                }
             }
         }
 

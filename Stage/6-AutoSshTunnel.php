@@ -21,9 +21,9 @@ class AutoSshTunnel extends StageCore implements StageInterface
     private $sshServiceFilePattern = "/home/pi/scripts/init-scripts/ssh-tunnels/ag-ssh-tunnels.%s.service";
     private $sshServiceSystemdMatchPattern = "ag-ssh-tunnels*";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, \stdClass $config)
     {
-        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, $config, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()

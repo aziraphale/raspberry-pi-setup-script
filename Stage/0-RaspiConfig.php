@@ -19,9 +19,9 @@ class RaspiConfig extends StageCore implements StageInterface
     private static $stageName        = "Run Raspberry Pi Config";
     private static $stageDescription = "Runs the `raspi-config` utility to allow for various settings to be configured.";
 
-    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout)
+    public function __construct(InputInterface $input, OutputInterface $output, Bailout $bailout, \stdClass $config)
     {
-        parent::__construct($input, $output, $bailout, self::$stageNumber, self::$stageName, self::$stageDescription);
+        parent::__construct($input, $output, $bailout, $config, self::$stageNumber, self::$stageName, self::$stageDescription);
     }
 
     public function run()
