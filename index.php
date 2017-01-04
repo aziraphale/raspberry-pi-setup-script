@@ -50,6 +50,11 @@ class RaspberryPiSetupCommand extends Command
     private $optConfigFile = null;
 
     /**
+     * @var string|null
+     */
+    private $optConfigFileFull = null;
+
+    /**
      * @var \stdClass|null
      */
     private $config = null;
@@ -84,6 +89,9 @@ class RaspberryPiSetupCommand extends Command
      */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
+        // Config defaults to an empty class so that it can be passed around (by-ref) immediately
+        $this->config = new \stdClass();
+
         $this->bailout = new Bailout($input, $output);
         $this->stageManager = new StageManager(
             getcwd() . "/.pi-setup-state",
@@ -91,7 +99,8 @@ class RaspberryPiSetupCommand extends Command
             __DIR__ . "/Stage/.stages.txt",
             $input,
             $output,
-            $this->bailout
+            $this->bailout,
+            $this->config
         );
 
         $output->getFormatter()->setStyle('info', new OutputFormatterStyle('yellow', null, ['bold']));
@@ -127,23 +136,15 @@ class RaspberryPiSetupCommand extends Command
                 ->bail(1);
         }
 
-        if ($this->optConfigFile !== null && (!is_file($this->optConfigFile) || !is_readable($this->optConfigFile))) {
+        if ($this->optConfigFile !== null && (!is_file($this->optConfigFileFull) || !is_readable($this->optConfigFileFull))) {
             $this
                 ->bailout
-                ->writeln("Specified config file '{$this->optConfigFile}' either doesn't exist or cannot be read!")
+                ->writeln("Specified config file '{$this->optConfigFile}' [{$this->optConfigFileFull}] either doesn't exist or cannot be read!")
                 ->bail(1);
         }
-    }
-
-    protected function saveOptions(InputInterface $input, OutputInterface $output)
-    {
-        $this->optList       = $input->getOption('list');
-        $this->optStart      = $input->getOption('start');
-        $this->optOnly       = $input->getOption('only');
-        $this->optConfigFile = $input->getOption('config');
 
         if ($this->optConfigFile) {
-            $configJsonStr = file_get_contents($this->optConfigFile);
+            $configJsonStr = file_get_contents($this->optConfigFileFull);
             if ($configJsonStr === false) {
                 $this
                     ->bailout
@@ -158,11 +159,24 @@ class RaspberryPiSetupCommand extends Command
                     ->writeln("Error decoding JSON of config file: " . json_last_error_msg())
                     ->bail(2);
             }
-            $this->config = $configJson;
+            // The config object has likely already been passed (by-ref) so we need to set its properties
+            //  rather than overwriting it entirely
+            foreach ($configJson as $k => $v) {
+                $this->config->{$k} = $v;
+            }
         }
 
         //var_dump(['list'=>$this->optList, 'start'=>$this->optStart, 'only'=>$this->optOnly]);
         $this->stageManager->setOptions($this->optList, $this->optStart, $this->optOnly, $this->config);
+    }
+
+    protected function saveOptions(InputInterface $input, OutputInterface $output)
+    {
+        $this->optList       = $input->getOption('list');
+        $this->optStart      = $input->getOption('start');
+        $this->optOnly       = $input->getOption('only');
+        $this->optConfigFile = $input->getOption('config');
+        $this->optConfigFileFull = getcwd() . "/" . $this->optConfigFile;
     }
 
     protected function listStages(InputInterface $input, OutputInterface $output)

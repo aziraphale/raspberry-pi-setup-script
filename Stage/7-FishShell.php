@@ -32,8 +32,8 @@ class FishShell extends StageCore implements StageInterface
                 ->mustRun();
 
             $this
-                ->newProcessTty('git checkout `git tag -l --sort=version:refname | ".
-                                "grep -P "^\d+\.\d+\.\d+" | tail -n1`', $fishDir)
+                ->newProcessTty('git checkout `git tag -l --sort=version:refname | '.
+                                'grep -P "^\d+\.\d+\.\d+" | tail -n1`', $fishDir)
                 ->mustRun();
 
             $this

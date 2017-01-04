@@ -95,8 +95,9 @@ class StageManager
      * @param InputInterface  $input
      * @param OutputInterface $output
      * @param Bailout         $bailout
+     * @param \stdClass       $config
      */
-    public function __construct($stageFile, $stagesDir, $stagesListFile, InputInterface $input, OutputInterface $output, Bailout $bailout)
+    public function __construct($stageFile, $stagesDir, $stagesListFile, InputInterface $input, OutputInterface $output, Bailout $bailout, $config)
     {
         $this->stageFile = $stageFile;
         $this->stagesDir = $stagesDir;
@@ -104,6 +105,7 @@ class StageManager
         $this->input = $input;
         $this->output = $output;
         $this->bailout = $bailout;
+        $this->config = $config;
 
         $this->itemiseStages();
     }

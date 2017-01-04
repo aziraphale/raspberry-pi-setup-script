@@ -116,14 +116,23 @@ abstract class StageCore
         //  call this method anyway
     }
 
+    private function getClassWithoutNamespace($object = null)
+    {
+        $className = get_class($object);
+        if ($pos = strrpos($className, '\\')) {
+            return substr($className, $pos + 1);
+        }
+        return $pos;
+    }
+
     private function getClassNameForConfigId()
     {
-        $className = get_class($this);
+        $className = $this->getClassWithoutNamespace($this);
         $className = preg_replace('/[^A-Za-z0-9]/', '', $className);
         return $className;
     }
 
-    private function getConfigValueIfPresent($questionId)
+    protected function getConfigValueIfPresent($questionId)
     {
         $classId = $this->getClassNameForConfigId();
 
@@ -139,7 +148,7 @@ abstract class StageCore
         static::$questionHelper->ask($this->input, $this->output, $conf);
     }
 
-    protected function askForConfirmation($questionIdString = null, $prompt = "Do you wish to continue? [Y/N]", $default = true, $yesRegexp = '/^y/i', callback $validator = null)
+    protected function askForConfirmation($questionIdString = null, $prompt = "Do you wish to continue? [Y/N]", $default = true, $yesRegexp = '/^y/i', \Closure $validator = null)
     {
         if ($yesRegexp === null) {
             $yesRegexp = '/^y/i';
@@ -148,8 +157,10 @@ abstract class StageCore
         if ($questionIdString !== null) {
             $configValue = $this->getConfigValueIfPresent($questionIdString);
             if ($configValue !== null) {
-                /** @noinspection NotOptimalRegularExpressionsInspection */
-                $valid = (bool) preg_match($yesRegexp, $configValue);
+                if (is_bool($configValue)) {
+                    $configValue = $configValue ? 'Y' : 'N';
+                }
+                $valid = (bool) preg_match('/[yn]/i', $configValue);
 
                 if ($valid && $validator !== null) {
                     try {
@@ -164,6 +175,10 @@ abstract class StageCore
                     }
                 }
                 if ($valid) {
+                    if (!is_bool($configValue)) {
+                        /** @noinspection NotOptimalRegularExpressionsInspection */
+                        $configValue = (bool) preg_match($yesRegexp, $configValue);
+                    }
                     return $configValue;
                 }
             }
@@ -176,7 +191,7 @@ abstract class StageCore
         return static::$questionHelper->ask($this->input, $this->output, $question);
     }
 
-    protected function askForString($questionIdString = null, $prompt = "Please enter:", $default = null, callback $validator = null)
+    protected function askForString($questionIdString = null, $prompt = "Please enter:", $default = null, \Closure $validator = null)
     {
         if ($questionIdString !== null) {
             $configValue = $this->getConfigValueIfPresent($questionIdString);
@@ -208,7 +223,7 @@ abstract class StageCore
         return static::$questionHelper->ask($this->input, $this->output, $question);
     }
 
-    protected function askForChoice($questionIdString = null, $prompt = "Choose one:", array $options, $defaultIndex = null, $errorMessage = null, callback $validator = null)
+    protected function askForChoice($questionIdString = null, $prompt = "Choose one:", array $options, $defaultIndex = null, $errorMessage = null, \Closure $validator = null)
     {
         if ($questionIdString !== null) {
             $configValue = $this->getConfigValueIfPresent($questionIdString);

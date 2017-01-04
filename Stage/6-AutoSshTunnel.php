@@ -30,7 +30,7 @@ class AutoSshTunnel extends StageCore implements StageInterface
     {
         $this->output->writeln("This is run() of stage #{$this->getNumber()} “{$this->getName()}”!");
 
-        $testProc = new Process("systemctl status " . escapeshellarg($this->sshServiceSystemdMatchPattern));
+        $testProc = new Process("sudo systemctl status " . escapeshellarg($this->sshServiceSystemdMatchPattern));
         $testProc->run();
         if ((string) $testProc->getOutput() === "") {
             // Not output from `systemctl status "ag-ssh-tunnels*"` indicates the service isn't yet installed
@@ -57,7 +57,7 @@ class AutoSshTunnel extends StageCore implements StageInterface
 
                 try {
                     $this
-                        ->newProcessTty("vim " . escapeshellarg($serviceFile))
+                        ->newProcessTty("nano " . escapeshellarg($serviceFile))
                         ->mustRun();
                 } catch (ProcessFailedException $ex) {
                     //$this->bailout->writeln("")->bail();
@@ -70,7 +70,7 @@ class AutoSshTunnel extends StageCore implements StageInterface
             $this->output->writeln("Installing the SSH Tunnels systemd service");
             try {
                 $this
-                    ->newProcessTty("systemctl --system enable " . escapeshellarg($serviceFile))
+                    ->newProcessTty("sudo systemctl --system enable " . escapeshellarg($serviceFile))
                     ->mustRun();
             } catch (ProcessFailedException $ex) {
                 $this
@@ -81,7 +81,7 @@ class AutoSshTunnel extends StageCore implements StageInterface
             $this->output->writeln("Starting the SSH Tunnels systemd service");
             try {
                 $this
-                    ->newProcessTty("systemctl start " . escapeshellarg(basename($serviceFile)))
+                    ->newProcessTty("sudo systemctl start " . escapeshellarg(basename($serviceFile)))
                     ->mustRun();
             } catch (ProcessFailedException $ex) {
                 $this
@@ -144,7 +144,11 @@ class AutoSshTunnel extends StageCore implements StageInterface
             return $value;
         };
 
-        $this->output->writeln("Please enter the name of this host as used to name the SSH auto-tunnel service file (e.g. pi-bedroom, pi0-doorcam, pi0-101, pi-kitchen, etc.)");
+        if (!$this->getConfigValueIfPresent("SshTunnelServiceHostname")) {
+            $this->output->writeln(
+                "Please enter the name of this host as used to name the SSH auto-tunnel service file (e.g. pi-bedroom, pi0-doorcam, pi0-101, pi-kitchen, etc.)"
+            );
+        }
         $this->answerSshServiceHostname =
             $this->askForString("SshTunnelServiceHostname", "SSH auto-tunnel service hostname:", null, $validation);
     }

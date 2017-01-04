@@ -28,14 +28,16 @@ class FishFunctions extends StageCore implements StageInterface
             $this->output->writeln("Symlinking fish function files into our fish config directory...");
             try {
                 $this
-                    ->newProcessTty(
-                        "mkdir -p ~pi/.config/fish/functions && " .
-                        "pushd ~pi/.config/fish/functions && " .
-                        "ln -s ~pi/scripts/fish/functions/* . && " .
-                        "rm is.hat.fish && " .
-                        "popd"
-                    )
+                    ->newProcessTty("mkdir -p ~pi/.config/fish/functions")
                     ->mustRun()
+                ;
+                $this
+                    ->newProcessTty("ln -s ~pi/scripts/fish/functions/* .", "/home/pi/.config/fish/functions")
+                    ->mustRun()
+                ;
+                $this
+                    ->newProcessTty("rm /home/pi/.config/fish/functions/is.hat.fish")
+                    ->run()
                 ;
             } catch (ProcessFailedException $ex) {
                 $this

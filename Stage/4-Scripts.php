@@ -76,7 +76,7 @@ class Scripts extends StageCore implements StageInterface
                 $this->output->writeln("Installing the Pi Camera systemd service");
                 try {
                     $this
-                        ->newProcessTty("systemctl --system enable " . escapeshellarg($serviceFile))
+                        ->newProcessTty("sudo systemctl --system enable " . escapeshellarg($serviceFile))
                         ->mustRun();
                 } catch (ProcessFailedException $ex) {
                     $this
@@ -87,7 +87,7 @@ class Scripts extends StageCore implements StageInterface
                 $this->output->writeln("Starting the Pi Camera systemd service");
                 try {
                     $this
-                        ->newProcessTty("systemctl start " . escapeshellarg(basename($serviceFile)))
+                        ->newProcessTty("sudo systemctl start " . escapeshellarg(basename($serviceFile)))
                         ->mustRun();
                 } catch (ProcessFailedException $ex) {
                     $this
@@ -123,7 +123,7 @@ class Scripts extends StageCore implements StageInterface
         if (isset($this->answerCameraServiceHostname)) {
             return;
         }
-        if ($this->answerInstallCameraService !== true) {
+        if (!$this->answerInstallCameraService) {
             // Only ask this if we're actually installing the service
             return;
         }
