@@ -11,7 +11,7 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class GitUser extends StageCore implements StageInterface
 {
-    private static $stageNumber      = 9;
+    private static $stageNumber      = 8;
     private static $stageName        = "Git User Details";
     private static $stageDescription = "Configures the global git username and email address so that git doesn't annoyingly prompt for those in future.";
 
