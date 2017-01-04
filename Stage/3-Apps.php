@@ -47,10 +47,13 @@ class Apps extends StageCore implements StageInterface
         }
 
         if (!is_dir("/home/pi/apps/mjpg-streamer")) {
-            $this->output->writeln("Cloning mjpg-streamer git repo for Pi camera streaming...");
+            $this->output->writeln("Cloning mjpg-streamer git repo & compiling it for Pi camera streaming...");
             try {
                 $this
                     ->newProcessTty("git clone https://github.com/jacksonliam/mjpg-streamer.git ~pi/apps/mjpg-streamer")
+                    ->mustRun();
+                $this
+                    ->newProcessTty("make && sudo make install", "/home/pi/apps/mjpg-streamer/mjpg-streamer-experimental")
                     ->mustRun();
             } catch (ProcessFailedException $ex) {
                 $this

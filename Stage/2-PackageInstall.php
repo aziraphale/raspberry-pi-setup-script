@@ -25,14 +25,34 @@ class PackageInstall extends StageCore implements StageInterface
         $this->output->writeln("This is run() of stage #{$this->getNumber()} “{$this->getName()}”!");
 
         try {
+            $packages = [
+                "fish",
+                "vim",
+                "htop",
+                "pv",
+                "git",
+                "autossh",
+                "autoconf", "build-essential", "autotools-dev",
+                "libncurses5-dev",
+                "php5", "php5-curl",
+                "sensord",
+                "python-smbus",
+                "i2c-tools",
+                "screen",
+                "etckeeper",
+                "etherwake", "wakeonlan",
+                "nmap",
+                "bluez", "python-bluez",
+                "ssed",
+                "cmake", "libjpeg8-dev", // Needed for mjpg-streamer
+            ];
+
             $this->output->writeln("Installing loads of required packages...");
             $this
                 ->newProcessTty(
                     "sudo apt-get update && ".
                     "sudo apt-get -y upgrade && ".
-                    "sudo apt-get -y install fish vim autossh autoconf build-essential libncurses5-dev htop pv ".
-                    "git php5 php5-curl autotools-dev sensord python-smbus i2c-tools screen etckeeper etherwake ".
-                    "wakeonlan nmap bluez python-bluez ssed"
+                    "sudo apt-get -y install " . implode(" ", $packages)
                 )
                 ->mustRun();
         } catch (ProcessFailedException $ex) {
